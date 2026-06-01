@@ -87,6 +87,7 @@ function editTodoText(id, newText) {
     return;
   }
 
+
   todos = todos.map((todo) =>
     todo.id === id ? { ...todo, text: trimmedText } : todo
   );
@@ -136,7 +137,21 @@ function createTodoElement(todo) {
   // 항목 컨테이너(li)
   const todoItem = document.createElement("li");
   todoItem.className = "todo-item";
-  // 완료 상태면 취소선 스타일을 위한 클래스를 추가한다.
+
+
+
+  
+  // 시작 상태 배경색 설정 문제 클로드로 해결
+  // 시작(진행 중) 상태면 배경색 변경을 위한 클래스를 추가한다.
+  if (todo.isStarted) {
+    todoItem.classList.add("is-started");
+  }
+
+  // 시작 상태 배경색 설정 문제 클로드로 해결
+
+
+
+  // 완료 상태면 취소선/배경 스타일을 위한 클래스를 추가한다.
   if (todo.isCompleted) {
     todoItem.classList.add("is-completed");
   }
@@ -155,8 +170,7 @@ function createTodoElement(todo) {
   startButton.className = "todo-item__button todo-item__button--start";
   startButton.textContent = "시작";
   startButton.addEventListener("click", () => toggleTodoStarted(todo.id));
-  startButton.disabled = todo.isStarted; // 이미 시작된 항목은 버튼 비활성화
-
+  
   // 수정 버튼
   const editButton = document.createElement("button");
   editButton.className = "todo-item__button todo-item__button--edit";
@@ -176,7 +190,7 @@ function createTodoElement(todo) {
   deleteButton.addEventListener("click", () => deleteTodo(todo.id));
 
   // 버튼들을 동작 영역에 모으고, 항목에 텍스트와 동작 영역을 붙인다.
-  actions.append(startButton, editButton, completeButton, deleteButton);
+  actions.append(editButton, startButton, completeButton, deleteButton);
   todoItem.append(todoText, actions);
 
   return todoItem;

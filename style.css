@@ -1,6 +1,7 @@
 /* ===== 전역 변수 및 기본 설정 ===== */
 :root {
   --color-primary: #672be0;       /* 메인 컬러(보라색) */
+  --color-primary-light: #9f64fd; /* 메인 컬러의 연한 버전(진행 전 항목 배경 등) */
   --color-primary-dark: #561fc0;  /* 호버 등 강조용 진한 보라 */
   --color-text: #2b2b35;          /* 기본 텍스트 색 */
   --color-muted: #9a9aa8;         /* 보조 텍스트(완료 항목 등) */
@@ -153,6 +154,12 @@ body {
   word-break: break-all;
 }
 
+/* 진행 중인 항목: 항목 배경색 연한 보라색 */
+.todo-item.is-started .todo-item__text {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
 /* 완료된 항목: 취소선 + 흐린 색 */
 .todo-item.is-completed .todo-item__text {
   text-decoration: line-through;
@@ -192,6 +199,13 @@ body {
   color: var(--color-primary);
 }
 
+/* 시작 버튼은 연한 메인 컬러로 강조 */
+.todo-item__button--start:hover {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
 /* 완료 버튼은 메인 컬러로 강조 */
 .todo-item__button--complete:hover {
   background-color: var(--color-primary);
@@ -204,4 +218,19 @@ body {
   background-color: var(--color-danger);
   border-color: var(--color-danger);
   color: #ffffff;
+}
+
+/* 진행 전 상태일 때 목록의 배경색 흰색(색 없음) */
+.todo-item:not(.is-started) {
+  background-color: var(--color-surface);
+}
+
+/* 시작하고 진행 중 상태일 때 목록의 배경색 가장 연한 보라색 */
+.todo-item.is-started:not(.is-completed) {
+  background-color: #f9f7fe;
+}
+
+/* 완료 상태일 때 목록의 배경색 살짝 연한 보라색 */
+.todo-item.is-completed {
+  background-color: #c1adff;
 }
