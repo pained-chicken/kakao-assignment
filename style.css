@@ -1,0 +1,175 @@
+/* ===== 전역 변수 및 기본 설정 ===== */
+:root {
+  --color-primary: #672be0;       /* 메인 컬러(보라색) */
+  --color-primary-dark: #561fc0;  /* 호버 등 강조용 진한 보라 */
+  --color-text: #2b2b35;          /* 기본 텍스트 색 */
+  --color-muted: #9a9aa8;         /* 보조 텍스트(완료 항목 등) */
+  --color-border: #e7e7ee;        /* 경계선 색 */
+  --color-bg: #f5f4fb;            /* 페이지 배경 */
+  --color-surface: #ffffff;       /* 카드/표면 배경 */
+  --color-danger: #e0483b;        /* 삭제 등 위험 동작 색 */
+  --radius: 12px;                 /* 공통 모서리 둥글기 */
+}
+
+/* 박스 사이징 통일 및 기본 여백 제거 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  display: flex;
+  justify-content: center;
+  padding: 48px 16px;
+  min-height: 100vh;
+}
+
+/* ===== 앱 컨테이너 ===== */
+.app {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: 0 8px 30px rgba(103, 43, 224, 0.08);
+}
+
+/* ===== 헤더 ===== */
+.app__header {
+  margin-bottom: 24px;
+}
+
+.app__title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ===== 입력 폼 ===== */
+.todo-form {
+  display: flex;
+  gap: 8px;
+}
+
+.todo-form__input {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+/* 입력창 포커스 시 메인 컬러로 강조 */
+.todo-form__input:focus {
+  border-color: var(--color-primary);
+}
+
+.todo-form__button {
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.todo-form__button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+/* ===== 안내 메시지 ===== */
+.form-message {
+  min-height: 18px;        /* 메시지 유무와 관계없이 높이 유지(레이아웃 흔들림 방지) */
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+/* ===== Todo 목록 ===== */
+.todo-list {
+  list-style: none;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 개별 Todo 항목 */
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+/* Todo 텍스트 */
+.todo-item__text {
+  flex: 1;
+  font-size: 15px;
+  word-break: break-all;
+}
+
+/* 완료된 항목: 취소선 + 흐린 색 */
+.todo-item.is-completed .todo-item__text {
+  text-decoration: line-through;
+  color: var(--color-muted);
+}
+
+/* 수정 모드일 때 사용되는 입력창 */
+.todo-item__edit-input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 15px;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  outline: none;
+}
+
+/* ===== 항목별 동작 버튼 ===== */
+.todo-item__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.todo-item__button {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.todo-item__button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* 완료 버튼은 메인 컬러로 강조 */
+.todo-item__button--complete:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* 삭제 버튼은 위험 색으로 강조 */
+.todo-item__button--delete:hover {
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #ffffff;
+}
