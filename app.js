@@ -26,6 +26,9 @@ let todos = [];
 // 각 Todo를 구분하기 위한 고유 id 생성용 카운터
 let nextTodoId = 1;
 
+// localStorage에 Todo 목록을 저장할 때 사용할 키
+const STORAGE_KEY = "todos";
+
 // 현재 선택된 필터 상태("all" | "none" | "active" | "completed")
 let currentFilter = "all";
 
@@ -78,6 +81,29 @@ function getSelectableYears() {
   return range(baseYear - 5, baseYear + 5);
 }
 
+// ===== localStorage 저장/불러오기 =====
+// 현재 todos 배열을 JSON 문자열로 변환해 localStorage에 저장한다.
+function saveTodos() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+}
+
+// localStorage에 저장된 Todo를 불러와 todos에 복원한다.
+// 저장된 값이 없으면 빈 배열을 유지한다.
+function loadTodos() {
+  const storedTodos = localStorage.getItem(STORAGE_KEY);
+  if (storedTodos === null) {
+    return; // 저장된 데이터가 없으면 그대로 둔다.
+  }
+
+  todos = JSON.parse(storedTodos);
+
+  // 복원한 Todo들의 가장 큰 id + 1로 카운터를 맞춰 id 충돌을 방지한다.
+  if (todos.length > 0) {
+    const maxId = todos.reduce((max, todo) => Math.max(max, todo.id), 0);
+    nextTodoId = maxId + 1;
+  }
+}
+
 // ===== 안내 메시지 표시 함수 =====
 // 빈 입력 등 사용자에게 피드백이 필요할 때 메시지를 보여준다.
 function showMessage(message) {
@@ -116,7 +142,8 @@ function addTodo(text) {
   todoInput.value = "";
   clearMessage();
 
-  // 변경된 상태를 화면에 다시 그린다.
+  // 변경된 상태를 저장하고 화면에 다시 그린다.
+  saveTodos();
   renderTodos();
 }
 
@@ -126,6 +153,7 @@ function toggleTodoStarted(id) {
   todos = todos.map((todo) =>
     todo.id === id && !todo.isStarted ? { ...todo, isStarted: !todo.isStarted } : todo
   );
+  saveTodos();
   renderTodos();
 }
 
@@ -136,6 +164,7 @@ function toggleTodoCompleted(id) {
   todos = todos.map((todo) =>
     todo.id === id && todo.isStarted ? { ...todo, isCompleted: !todo.isCompleted } : todo
   );
+  saveTodos();
   renderTodos();
 }
 
@@ -156,6 +185,7 @@ function editTodoText(id, newText) {
     todo.id === id ? { ...todo, text: trimmedText } : todo
   );
   clearMessage();
+  saveTodos();
   renderTodos();
 }
 
@@ -163,6 +193,7 @@ function editTodoText(id, newText) {
 // 해당 id의 Todo를 배열에서 제거한다.
 function deleteTodo(id) {
   todos = todos.filter((todo) => todo.id !== id);
+  saveTodos();
   renderTodos();
 }
 
@@ -435,7 +466,8 @@ document.addEventListener("click", (event) => {
   }
 });
 
-// 첫 화면 렌더링(날짜 라벨 + 선택기 + 목록)
+// 첫 화면 렌더링: localStorage에서 데이터를 복원한 뒤 화면을 그린다.
+loadTodos();
 renderDate();
 renderDatePicker();
 renderTodos();
