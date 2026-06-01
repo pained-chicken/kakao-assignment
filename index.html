@@ -34,6 +34,26 @@
       <button type="submit" class="todo-form__button">추가</button>
     </form>
 
+    <!-- 날짜 선택기: 입력창 바로 아래에서 연/월/일(요일)을 드롭다운으로 고른다 -->
+    <!-- 각 field의 트리거를 누르면 아래로 숫자 목록(메뉴)이 열린다 -->
+    <div id="date-picker" class="date-picker">
+      <!-- 연도 선택 -->
+      <div class="date-picker__field">
+        <button type="button" id="picker-year-trigger" class="date-picker__trigger"></button>
+        <ul id="picker-year-menu" class="date-picker__menu"></ul>
+      </div>
+      <!-- 월 선택 -->
+      <div class="date-picker__field">
+        <button type="button" id="picker-month-trigger" class="date-picker__trigger"></button>
+        <ul id="picker-month-menu" class="date-picker__menu"></ul>
+      </div>
+      <!-- 일(요일) 선택 -->
+      <div class="date-picker__field">
+        <button type="button" id="picker-day-trigger" class="date-picker__trigger"></button>
+        <ul id="picker-day-menu" class="date-picker__menu"></ul>
+      </div>
+    </div>
+
     <!-- 안내 메시지 영역: 빈 입력 등 사용자 피드백을 표시 -->
     <p id="form-message" class="form-message"></p>
 

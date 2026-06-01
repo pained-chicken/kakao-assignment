@@ -8,6 +8,15 @@ const prevDayButton = document.getElementById("prev-day");   // 이전 날짜 �
 const nextDayButton = document.getElementById("next-day");   // 다음 날짜 버튼
 const currentDateLabel = document.getElementById("current-date"); // 현재 날짜 표시
 
+// 날짜 선택기(드롭다운) 관련 요소
+const datePicker = document.getElementById("date-picker");           // 선택기 전체 컨테이너
+const pickerYearTrigger = document.getElementById("picker-year-trigger");   // 연도 트리거
+const pickerMonthTrigger = document.getElementById("picker-month-trigger"); // 월 트리거
+const pickerDayTrigger = document.getElementById("picker-day-trigger");     // 일 트리거
+const pickerYearMenu = document.getElementById("picker-year-menu");   // 연도 메뉴
+const pickerMonthMenu = document.getElementById("picker-month-menu"); // 월 메뉴
+const pickerDayMenu = document.getElementById("picker-day-menu");     // 일 메뉴
+
 // ===== 상태(데이터) =====
 // 모든 Todo를 객체 배열로 관리한다.
 // 각 Todo는 { id, text, date, isStarted, isCompleted } 형태를 가진다.
@@ -46,6 +55,27 @@ function formatDateLabel(date) {
     label += " · 오늘";
   }
   return label;
+}
+
+// start부터 end까지의 정수 배열을 만든다(드롭다운 숫자 목록 생성용).
+function range(start, end) {
+  const numbers = [];
+  for (let value = start; value <= end; value++) {
+    numbers.push(value);
+  }
+  return numbers;
+}
+
+// 특정 연/월(month는 1~12)의 마지막 일자(=그 달의 일수)를 구한다.
+// new Date(year, month, 0)은 'month달의 0일' = 전월의 마지막 날을 의미한다.
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+// 드롭다운에 보여줄 연도 범위(선택된 연도 기준 ±5년).
+function getSelectableYears() {
+  const baseYear = selectedDate.getFullYear();
+  return range(baseYear - 5, baseYear + 5);
 }
 
 // ===== 안내 메시지 표시 함수 =====
@@ -260,8 +290,77 @@ function renderDate() {
 // offsetDays 만큼 날짜를 이동(-1: 이전, +1: 다음)하고 화면을 갱신한다.
 function changeSelectedDate(offsetDays) {
   selectedDate.setDate(selectedDate.getDate() + offsetDays);
-  renderDate();   // 날짜 라벨 갱신
-  renderTodos();  // 해당 날짜의 Todo 목록 갱신
+  renderDate();       // 날짜 라벨 갱신
+  renderDatePicker(); // 드롭다운 선택기도 같은 날짜로 동기화
+  renderTodos();      // 해당 날짜의 Todo 목록 갱신
+}
+
+// ===== 날짜 선택기: 단일 메뉴(숫자 목록) 생성 =====
+// menuElement에 values 배열을 항목으로 채우고, 현재 값은 활성 표시한다.
+// unit("year"|"month"|"day")과 value를 dataset에 담아 클릭 시 활용한다.
+function renderPickerMenu(menuElement, unit, values, activeValue, formatLabel) {
+  menuElement.innerHTML = "";
+  values.forEach((value) => {
+    const option = document.createElement("li");
+    option.className = "date-picker__option";
+    // 현재 선택된 값이면 강조 클래스를 추가한다.
+    if (value === activeValue) {
+      option.classList.add("is-active");
+    }
+    option.textContent = formatLabel(value);
+    option.dataset.unit = unit;
+    option.dataset.value = value;
+    menuElement.appendChild(option);
+  });
+}
+
+// ===== 날짜 선택기 전체 갱신 =====
+// 트리거 라벨(연/월/일·요일)과 세 메뉴를 현재 selectedDate 기준으로 다시 그린다.
+function renderDatePicker() {
+  const year = selectedDate.getFullYear();
+  const month = selectedDate.getMonth() + 1; // 0~11 → 1~12
+  const day = selectedDate.getDate();
+  const weekday = WEEKDAY_NAMES[selectedDate.getDay()];
+
+  // 각 트리거에 현재 값을 표시한다.
+  pickerYearTrigger.textContent = `${year}년`;
+  pickerMonthTrigger.textContent = `${month}월`;
+  pickerDayTrigger.textContent = `${day}일 (${weekday})`;
+
+  // 메뉴(숫자 목록)를 다시 생성한다. 일 메뉴는 해당 연/월의 일수에 맞춘다.
+  renderPickerMenu(pickerYearMenu, "year", getSelectableYears(), year, (v) => `${v}년`);
+  renderPickerMenu(pickerMonthMenu, "month", range(1, 12), month, (v) => `${v}월`);
+  renderPickerMenu(pickerDayMenu, "day", range(1, getDaysInMonth(year, month)), day, (v) => `${v}일`);
+}
+
+// ===== 열려 있는 모든 드롭다운 메뉴 닫기 =====
+function closeAllPickerMenus() {
+  datePicker
+    .querySelectorAll(".date-picker__field.is-open")
+    .forEach((field) => field.classList.remove("is-open"));
+}
+
+// ===== 드롭다운에서 연/월/일 값을 선택했을 때 처리 =====
+// 선택한 단위에 맞춰 selectedDate를 갱신하고 화면 전체를 다시 그린다.
+function selectDatePart(unit, value) {
+  if (unit === "year") {
+    // 연도 변경 시, 바뀐 연도의 해당 월 일수를 넘지 않도록 일자를 먼저 보정한다.
+    const maxDay = getDaysInMonth(value, selectedDate.getMonth() + 1);
+    selectedDate.setDate(Math.min(selectedDate.getDate(), maxDay));
+    selectedDate.setFullYear(value);
+  } else if (unit === "month") {
+    // 월 변경 시, 바뀐 월의 일수를 넘지 않도록 일자를 먼저 보정한다.
+    const maxDay = getDaysInMonth(selectedDate.getFullYear(), value);
+    selectedDate.setDate(Math.min(selectedDate.getDate(), maxDay));
+    selectedDate.setMonth(value - 1); // 1~12 → 0~11
+  } else if (unit === "day") {
+    selectedDate.setDate(value);
+  }
+
+  closeAllPickerMenus();
+  renderDate();       // 헤더 날짜 라벨 갱신
+  renderDatePicker(); // 선택기 라벨/메뉴 갱신
+  renderTodos();      // 해당 날짜의 Todo 목록 갱신
 }
 
 // ===== 전체 Todo 목록 렌더링(Read) =====
@@ -305,6 +404,38 @@ todoFilters.addEventListener("click", (event) => {
 prevDayButton.addEventListener("click", () => changeSelectedDate(-1));
 nextDayButton.addEventListener("click", () => changeSelectedDate(1));
 
-// 첫 화면 렌더링(날짜 라벨 + 목록)
+// 날짜 선택기 클릭 처리(이벤트 위임: 컨테이너에 한 번만 등록)
+datePicker.addEventListener("click", (event) => {
+  // 1) 트리거를 눌렀으면 해당 메뉴를 토글한다(다른 메뉴는 닫음).
+  const trigger = event.target.closest(".date-picker__trigger");
+  if (trigger) {
+    const field = trigger.closest(".date-picker__field");
+    const willOpen = !field.classList.contains("is-open");
+    closeAllPickerMenus();
+    if (willOpen) {
+      field.classList.add("is-open");
+      // 현재 선택된 항목이 보이도록 메뉴를 스크롤한다.
+      const activeOption = field.querySelector(".date-picker__option.is-active");
+      if (activeOption) activeOption.scrollIntoView({ block: "nearest" });
+    }
+    return;
+  }
+
+  // 2) 메뉴의 숫자 항목을 눌렀으면 해당 값으로 날짜를 변경한다.
+  const option = event.target.closest(".date-picker__option");
+  if (option) {
+    selectDatePart(option.dataset.unit, parseInt(option.dataset.value, 10));
+  }
+});
+
+// 선택기 바깥을 클릭하면 열려 있는 메뉴를 닫는다.
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".date-picker")) {
+    closeAllPickerMenus();
+  }
+});
+
+// 첫 화면 렌더링(날짜 라벨 + 선택기 + 목록)
 renderDate();
+renderDatePicker();
 renderTodos();
