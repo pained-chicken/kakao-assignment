@@ -30,6 +30,15 @@
     <!-- 안내 메시지 영역: 빈 입력 등 사용자 피드백을 표시 -->
     <p id="form-message" class="form-message"></p>
 
+    <!-- 상태별 필터 탭: 전체 / 진행 전 / 진행 중 / 완료 -->
+    <!-- 각 버튼의 data-filter 값으로 어떤 상태를 보여줄지 구분한다 -->
+    <div id="todo-filters" class="todo-filters">
+      <button type="button" class="todo-filters__button is-active" data-filter="all">전체</button>
+      <button type="button" class="todo-filters__button" data-filter="none">진행 전</button>
+      <button type="button" class="todo-filters__button" data-filter="active">진행 중</button>
+      <button type="button" class="todo-filters__button" data-filter="completed">완료</button>
+    </div>
+
     <!-- Todo 항목들이 동적으로 렌더링되는 목록 영역 -->
     <ul id="todo-list" class="todo-list"></ul>
   </main>

@@ -95,6 +95,38 @@ body {
   color: var(--color-danger);
 }
 
+/* ===== 상태별 필터 탭 ===== */
+.todo-filters {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.todo-filters__button {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-muted);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+/* 비활성 탭 hover 시 메인 컬러로 약하게 강조 */
+.todo-filters__button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* 현재 선택된 탭: 메인 컬러 배경 + 흰 글씨로 강조 */
+.todo-filters__button.is-active {
+  color: #ffffff;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
 /* ===== Todo 목록 ===== */
 .todo-list {
   list-style: none;

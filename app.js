@@ -3,6 +3,7 @@ const todoForm = document.getElementById("todo-form");       // 입력 폼
 const todoInput = document.getElementById("todo-input");     // 텍스트 입력창
 const formMessage = document.getElementById("form-message"); // 안내 메시지 영역
 const todoList = document.getElementById("todo-list");       // Todo 목록(ul)
+const todoFilters = document.getElementById("todo-filters"); // 필터 탭 영역
 
 // ===== 상태(데이터) =====
 // 모든 Todo를 객체 배열로 관리한다.
@@ -11,6 +12,9 @@ let todos = [];
 
 // 각 Todo를 구분하기 위한 고유 id 생성용 카운터
 let nextTodoId = 1;
+
+// 현재 선택된 필터 상태("all" | "active" | "completed")
+let currentFilter = "all";
 
 // ===== 안내 메시지 표시 함수 =====
 // 빈 입력 등 사용자에게 피드백이 필요할 때 메시지를 보여준다.
@@ -39,7 +43,8 @@ function addTodo(text) {
   const newTodo = {
     id: nextTodoId++,
     text: trimmedText,
-    isCompleted: false,
+    isStarted: false, // 진행 여부 추가
+    isCompleted: false, // 완료 여부
   };
   todos.push(newTodo);
 
@@ -51,11 +56,21 @@ function addTodo(text) {
   renderTodos();
 }
 
+// ===== Todo 진행 토글(Update) =====
+// 해당 id의 Todo 진행 여부를 반전시킨다.
+function toggleTodoStarted(id) {
+  todos = todos.map((todo) =>
+    todo.id === id && !todo.isStarted ? { ...todo, isStarted: !todo.isStarted } : todo
+  );
+  renderTodos();
+}
+
+
 // ===== Todo 완료 토글(Update) =====
 // 해당 id의 Todo 완료 여부를 반전시킨다.
 function toggleTodoCompleted(id) {
   todos = todos.map((todo) =>
-    todo.id === id ? { ...todo, isCompleted: !todo.isCompleted } : todo
+    todo.id === id && todo.isStarted ? { ...todo, isCompleted: !todo.isCompleted } : todo
   );
   renderTodos();
 }
@@ -135,6 +150,13 @@ function createTodoElement(todo) {
   const actions = document.createElement("div");
   actions.className = "todo-item__actions";
 
+  // 시작 버튼
+  const startButton = document.createElement("button");
+  startButton.className = "todo-item__button todo-item__button--start";
+  startButton.textContent = "시작";
+  startButton.addEventListener("click", () => toggleTodoStarted(todo.id));
+  startButton.disabled = todo.isStarted; // 이미 시작된 항목은 버튼 비활성화
+
   // 수정 버튼
   const editButton = document.createElement("button");
   editButton.className = "todo-item__button todo-item__button--edit";
@@ -154,18 +176,33 @@ function createTodoElement(todo) {
   deleteButton.addEventListener("click", () => deleteTodo(todo.id));
 
   // 버튼들을 동작 영역에 모으고, 항목에 텍스트와 동작 영역을 붙인다.
-  actions.append(editButton, completeButton, deleteButton);
+  actions.append(startButton, editButton, completeButton, deleteButton);
   todoItem.append(todoText, actions);
 
   return todoItem;
 }
 
+// ===== 현재 필터에 맞는 Todo만 추려서 반환 =====
+// currentFilter 값에 따라 보여줄 Todo 목록을 걸러낸다.
+function getFilteredTodos() {
+  switch (currentFilter) {
+    case "none": // 진행 전: 시작되지 않은 항목만
+      return todos.filter((todo) => !todo.isStarted);
+    case "active": // 진행 중: 시작되었지만 완료되지 않은 항목만
+      return todos.filter((todo) => todo.isStarted && !todo.isCompleted);
+    case "completed": // 완료: 완료된 항목만
+      return todos.filter((todo) => todo.isCompleted);
+    default: // 전체: 모든 항목
+      return todos;
+  }
+}
+
 // ===== 전체 Todo 목록 렌더링(Read) =====
-// 상태(todos)를 기반으로 화면을 다시 그린다.
+// 현재 필터에 맞는 Todo를 기반으로 화면을 다시 그린다.
 function renderTodos() {
-  // 기존 목록을 비운 뒤 현재 상태로 새로 그린다.
+  // 기존 목록을 비운 뒤 필터링된 상태로 새로 그린다.
   todoList.innerHTML = "";
-  todos.forEach((todo) => {
+  getFilteredTodos().forEach((todo) => {
     const todoElement = createTodoElement(todo);
     todoList.appendChild(todoElement);
   });
@@ -176,6 +213,25 @@ function renderTodos() {
 todoForm.addEventListener("submit", (event) => {
   event.preventDefault(); // 폼 기본 동작(새로고침) 방지
   addTodo(todoInput.value);
+});
+
+// 필터 탭 클릭 처리(이벤트 위임: 부모에 한 번만 등록)
+todoFilters.addEventListener("click", (event) => {
+  // 클릭 대상이 필터 버튼이 아니면 무시한다.
+  const clickedButton = event.target.closest(".todo-filters__button");
+  if (!clickedButton) return;
+
+  // 선택된 필터 값으로 상태를 갱신한다.
+  currentFilter = clickedButton.dataset.filter;
+
+  // 모든 탭에서 활성 표시를 제거하고, 클릭한 탭에만 다시 추가한다.
+  todoFilters
+    .querySelectorAll(".todo-filters__button")
+    .forEach((button) => button.classList.remove("is-active"));
+  clickedButton.classList.add("is-active");
+
+  // 변경된 필터 기준으로 목록을 다시 그린다.
+  renderTodos();
 });
 
 // 첫 화면 렌더링
