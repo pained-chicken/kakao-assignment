@@ -51,6 +51,46 @@ body {
   color: var(--color-primary);
 }
 
+/* ===== 일간 뷰 날짜 네비게이션 ===== */
+.date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 12px;
+  background-color: var(--color-bg);
+  border-radius: var(--radius);
+}
+
+/* 이전/다음 날짜 이동 버튼 */
+.date-nav__button {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.date-nav__button:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* 현재 선택된 날짜 표시 */
+.date-nav__label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
 /* ===== 입력 폼 ===== */
 .todo-form {
   display: flex;
