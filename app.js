@@ -17,6 +17,12 @@ const pickerYearMenu = document.getElementById("picker-year-menu");   // 연도 
 const pickerMonthMenu = document.getElementById("picker-month-menu"); // 월 메뉴
 const pickerDayMenu = document.getElementById("picker-day-menu");     // 일 메뉴
 
+// 주간 뷰 관련 요소
+const prevWeekButton = document.getElementById("prev-week"); // 이전 주 버튼
+const nextWeekButton = document.getElementById("next-week"); // 다음 주 버튼
+const weekRangeLabel = document.getElementById("week-range"); // 현재 주 범위 표시
+const weekDays = document.getElementById("week-days");        // 날짜 셀 컨테이너
+
 // ===== 상태(데이터) =====
 // 모든 Todo를 객체 배열로 관리한다.
 // 각 Todo는 { id, text, date, isStarted, isCompleted } 형태를 가진다.
@@ -34,6 +40,10 @@ let currentFilter = "all";
 
 // 현재 선택된 날짜(일간 뷰의 기준). 처음에는 오늘로 설정한다.
 let selectedDate = new Date();
+
+// 주간 뷰에서 특정 날짜 선택을 해제한 '주 전체 보기' 상태인지 여부.
+// true이면 selectedDate가 속한 주의 모든 Todo를 보여준다.
+let showWholeWeek = false;
 
 // 요일 이름(0=일요일 ~ 6=토요일). 날짜 표시에 사용한다.
 const WEEKDAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
@@ -79,6 +89,44 @@ function getDaysInMonth(year, month) {
 function getSelectableYears() {
   const baseYear = selectedDate.getFullYear();
   return range(baseYear - 5, baseYear + 5);
+}
+
+// "YYYY-MM-DD" 문자열을 Date 객체로 되돌린다(주간 셀 클릭 처리 등에 사용).
+function parseDateKey(dateKey) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+// 주어진 날짜가 속한 주의 '월요일' Date를 구한다.
+function getWeekStart(date) {
+  const start = new Date(date);
+  const dayOfWeek = start.getDay();           // 0(일)~6(토)
+  const offsetToMonday = (dayOfWeek + 6) % 7;  // 월요일까지 거슬러 갈 일수
+  start.setDate(start.getDate() - offsetToMonday);
+  return start;
+}
+
+// 주어진 날짜가 속한 주의 월~일 7개 Date 배열을 구한다.
+function getWeekDays(date) {
+  const start = getWeekStart(date);
+  return range(0, 6).map((offset) => {
+    const day = new Date(start);
+    day.setDate(start.getDate() + offset);
+    return day;
+  });
+}
+
+// 특정 날짜 키("YYYY-MM-DD")에 해당하는 Todo 개수를 센다.
+function countTodosForDate(dateKey) {
+  return todos.filter((todo) => todo.date === dateKey).length;
+}
+
+// 현재 주의 범위 라벨을 만든다. 예: "2026년 6월 1일 ~ 6월 7일"
+function formatWeekRange(date) {
+  const weekDates = getWeekDays(date);
+  const start = weekDates[0];
+  const end = weekDates[6];
+  return `${start.getFullYear()}년 ${start.getMonth() + 1}월 ${start.getDate()}일 ~ ${end.getMonth() + 1}월 ${end.getDate()}일`;
 }
 
 // ===== localStorage 저장/불러오기 =====
@@ -144,6 +192,7 @@ function addTodo(text) {
 
   // 변경된 상태를 저장하고 화면에 다시 그린다.
   saveTodos();
+  renderWeekView(); // 날짜별 개수 갱신
   renderTodos();
 }
 
@@ -154,6 +203,7 @@ function toggleTodoStarted(id) {
     todo.id === id && !todo.isStarted ? { ...todo, isStarted: !todo.isStarted } : todo
   );
   saveTodos();
+  renderWeekView(); // 날짜별 개수 갱신
   renderTodos();
 }
 
@@ -165,6 +215,7 @@ function toggleTodoCompleted(id) {
     todo.id === id && todo.isStarted ? { ...todo, isCompleted: !todo.isCompleted } : todo
   );
   saveTodos();
+  renderWeekView(); // 날짜별 개수 갱신
   renderTodos();
 }
 
@@ -186,6 +237,7 @@ function editTodoText(id, newText) {
   );
   clearMessage();
   saveTodos();
+  renderWeekView(); // 날짜별 개수 갱신
   renderTodos();
 }
 
@@ -194,6 +246,7 @@ function editTodoText(id, newText) {
 function deleteTodo(id) {
   todos = todos.filter((todo) => todo.id !== id);
   saveTodos();
+  renderWeekView(); // 날짜별 개수 갱신
   renderTodos();
 }
 
@@ -291,23 +344,34 @@ function createTodoElement(todo) {
   return todoItem;
 }
 
-// ===== 현재 날짜와 필터에 맞는 Todo만 추려서 반환 =====
-// 1) 선택된 날짜의 Todo만 고른 뒤, 2) currentFilter 상태로 한 번 더 거른다.
-function getFilteredTodos() {
-  // 1) 선택된 날짜에 해당하는 Todo만 남긴다.
+// ===== 날짜 범위로 Todo 추리기 =====
+// '주 전체 보기'이면 현재 주(월~일)의 Todo를, 아니면 선택된 하루의 Todo를 반환한다.
+function getDateScopedTodos() {
+  if (showWholeWeek) {
+    // 현재 주에 속한 날짜 키 목록을 만들고, 그 안에 포함되는 Todo만 남긴다.
+    const weekKeys = getWeekDays(selectedDate).map((day) => getDateKey(day));
+    return todos.filter((todo) => weekKeys.includes(todo.date));
+  }
+  // 특정 날짜가 선택된 상태: 그 날짜의 Todo만 남긴다.
   const selectedDateKey = getDateKey(selectedDate);
-  const todosOfDate = todos.filter((todo) => todo.date === selectedDateKey);
+  return todos.filter((todo) => todo.date === selectedDateKey);
+}
 
-  // 2) 상태 필터를 적용한다.
+// ===== 현재 날짜 범위와 필터에 맞는 Todo만 추려서 반환 =====
+// 1) 날짜 범위(주 전체/하루)로 거른 뒤, 2) currentFilter 상태로 한 번 더 거른다.
+function getFilteredTodos() {
+  const scopedTodos = getDateScopedTodos();
+
+  // 상태 필터를 적용한다.
   switch (currentFilter) {
     case "none": // 진행 전: 시작되지 않은 항목만
-      return todosOfDate.filter((todo) => !todo.isStarted);
+      return scopedTodos.filter((todo) => !todo.isStarted);
     case "active": // 진행 중: 시작되었지만 완료되지 않은 항목만
-      return todosOfDate.filter((todo) => todo.isStarted && !todo.isCompleted);
+      return scopedTodos.filter((todo) => todo.isStarted && !todo.isCompleted);
     case "completed": // 완료: 완료된 항목만
-      return todosOfDate.filter((todo) => todo.isCompleted);
-    default: // 전체: 해당 날짜의 모든 항목
-      return todosOfDate;
+      return scopedTodos.filter((todo) => todo.isCompleted);
+    default: // 전체: 범위 내 모든 항목
+      return scopedTodos;
   }
 }
 
@@ -321,9 +385,72 @@ function renderDate() {
 // offsetDays 만큼 날짜를 이동(-1: 이전, +1: 다음)하고 화면을 갱신한다.
 function changeSelectedDate(offsetDays) {
   selectedDate.setDate(selectedDate.getDate() + offsetDays);
+  showWholeWeek = false; // 특정 날짜로 이동하므로 주 전체 보기를 해제한다.
   renderDate();       // 날짜 라벨 갱신
   renderDatePicker(); // 드롭다운 선택기도 같은 날짜로 동기화
+  renderWeekView();   // 주간 뷰 선택 상태/주차도 동기화
   renderTodos();      // 해당 날짜의 Todo 목록 갱신
+}
+
+// ===== 주간 뷰 렌더링 =====
+// 현재 주의 범위 라벨과 월~일 날짜 셀(요일/일자/개수)을 다시 그린다.
+function renderWeekView() {
+  weekRangeLabel.textContent = formatWeekRange(selectedDate);
+
+  const todayKey = getDateKey(new Date());
+  const selectedKey = getDateKey(selectedDate);
+
+  weekDays.innerHTML = "";
+  getWeekDays(selectedDate).forEach((day) => {
+    const dayKey = getDateKey(day);
+
+    // 날짜 셀(클릭 가능한 버튼)
+    const cell = document.createElement("button");
+    cell.type = "button";
+    cell.className = "week-day";
+    cell.dataset.date = dayKey;
+
+    // 오늘 날짜는 항상 강조한다.
+    if (dayKey === todayKey) {
+      cell.classList.add("is-today");
+    }
+    // 특정 날짜가 선택된 상태(주 전체 보기가 아닐 때)면 선택 강조한다.
+    if (!showWholeWeek && dayKey === selectedKey) {
+      cell.classList.add("is-selected");
+    }
+
+    // 요일
+    const weekday = document.createElement("span");
+    weekday.className = "week-day__weekday";
+    weekday.textContent = WEEKDAY_NAMES[day.getDay()];
+
+    // 일자
+    const dateNumber = document.createElement("span");
+    dateNumber.className = "week-day__date";
+    dateNumber.textContent = day.getDate();
+
+    // 해당 날짜의 Todo 개수
+    const count = countTodosForDate(dayKey);
+    const countLabel = document.createElement("span");
+    countLabel.className = "week-day__count";
+    if (count === 0) {
+      countLabel.classList.add("is-empty");
+    }
+    countLabel.textContent = `${count}개`;
+
+    cell.append(weekday, dateNumber, countLabel);
+    weekDays.appendChild(cell);
+  });
+}
+
+// ===== 주차 이동 =====
+// offsetWeeks 만큼 주를 이동(-1: 이전 주, +1: 다음 주)하고 화면을 갱신한다.
+function changeWeek(offsetWeeks) {
+  selectedDate.setDate(selectedDate.getDate() + offsetWeeks * 7);
+  renderDate();
+  renderDatePicker();
+  renderWeekView();
+  renderTodos();
 }
 
 // ===== 날짜 선택기: 단일 메뉴(숫자 목록) 생성 =====
@@ -389,8 +516,10 @@ function selectDatePart(unit, value) {
   }
 
   closeAllPickerMenus();
+  showWholeWeek = false; // 드롭다운으로 특정 날짜를 골랐으므로 주 전체 보기 해제
   renderDate();       // 헤더 날짜 라벨 갱신
   renderDatePicker(); // 선택기 라벨/메뉴 갱신
+  renderWeekView();   // 주간 뷰 동기화
   renderTodos();      // 해당 날짜의 Todo 목록 갱신
 }
 
@@ -466,8 +595,37 @@ document.addEventListener("click", (event) => {
   }
 });
 
+// 이전/다음 주차 버튼: 클릭 시 한 주씩 이동한다.
+prevWeekButton.addEventListener("click", () => changeWeek(-1));
+nextWeekButton.addEventListener("click", () => changeWeek(1));
+
+// 주간 뷰 날짜 클릭 처리(이벤트 위임: 컨테이너에 한 번만 등록)
+weekDays.addEventListener("click", (event) => {
+  const cell = event.target.closest(".week-day");
+  if (!cell) return;
+
+  const clickedKey = cell.dataset.date;
+  // 현재 선택돼 있는 날짜를 다시 누른 경우인지 판단한다.
+  const isAlreadySelected = !showWholeWeek && clickedKey === getDateKey(selectedDate);
+
+  if (isAlreadySelected) {
+    // 선택된 날짜를 다시 누르면 선택을 해제하고 그 주 전체를 보여준다.
+    showWholeWeek = true;
+  } else {
+    // 그 외에는 클릭한 날짜를 선택한다.
+    selectedDate = parseDateKey(clickedKey);
+    showWholeWeek = false;
+  }
+
+  renderDate();
+  renderDatePicker();
+  renderWeekView();
+  renderTodos();
+});
+
 // 첫 화면 렌더링: localStorage에서 데이터를 복원한 뒤 화면을 그린다.
 loadTodos();
 renderDate();
 renderDatePicker();
+renderWeekView();
 renderTodos();

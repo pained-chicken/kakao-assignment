@@ -21,6 +21,18 @@
       </div>
     </header>
 
+    <!-- 주간 뷰: 이번 주(월~일) 날짜를 가로로 나열하고 주차를 이동한다 -->
+    <section class="week-view">
+      <!-- 이전/다음 주차 이동 + 현재 주 범위 표시 -->
+      <div class="week-view__nav">
+        <button type="button" id="prev-week" class="week-view__nav-button" aria-label="이전 주">‹</button>
+        <span id="week-range" class="week-view__range"></span>
+        <button type="button" id="next-week" class="week-view__nav-button" aria-label="다음 주">›</button>
+      </div>
+      <!-- 월~일 7개 날짜 셀이 동적으로 렌더링되는 영역 -->
+      <div id="week-days" class="week-view__days"></div>
+    </section>
+
     <!-- 입력 영역: Todo 생성 폼 -->
     <!-- form으로 감싸 Enter 키 입력으로도 추가가 가능하도록 함 -->
     <form id="todo-form" class="todo-form">

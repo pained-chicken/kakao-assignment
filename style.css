@@ -91,6 +91,110 @@ body {
   color: var(--color-text);
 }
 
+/* ===== 주간 뷰 ===== */
+.week-view {
+  margin-bottom: 24px;
+}
+
+/* 이전/다음 주차 이동 + 주 범위 표시 줄 */
+.week-view__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.week-view__nav-button {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.week-view__nav-button:hover {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.week-view__range {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* 월~일 7개 날짜를 가로로 균등 배치 */
+.week-view__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+/* 개별 날짜 셀 */
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.week-day:hover {
+  border-color: var(--color-primary);
+}
+
+/* 요일 라벨 */
+.week-day__weekday {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* 일자 숫자 */
+.week-day__date {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* 해당 날짜의 Todo 개수 */
+.week-day__count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+/* Todo가 없는 날짜의 개수는 흐리게 표시 */
+.week-day__count.is-empty {
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+/* 오늘 날짜: 메인 컬러 테두리로 구분 */
+.week-day.is-today {
+  background-color: #d9c7fd;
+  border-color: var(--color-primary);
+}
+
+/* 클릭(선택)된 날짜: 연보라 배경 */
+.week-day.is-selected {
+  
+  border-color: var(--color-primary);
+  border-width: 2px;
+}
+
 /* ===== 입력 폼 ===== */
 .todo-form {
   display: flex;
