@@ -182,15 +182,14 @@ body {
   font-weight: 400;
 }
 
-/* 오늘 날짜: 메인 컬러 테두리로 구분 */
+/* 오늘 날짜: 연보라 색 배경으로 구분 */
 .week-day.is-today {
   background-color: #d9c7fd;
   border-color: var(--color-primary);
 }
 
-/* 클릭(선택)된 날짜: 연보라 배경 */
-.week-day.is-selected {
-  
+/* 클릭(선택)된 날짜: 메인 컬러 테두리로 구분 */
+.week-day.is-selected { 
   border-color: var(--color-primary);
   border-width: 2px;
 }
